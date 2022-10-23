@@ -211,8 +211,8 @@ int main(int argc, char **argv) {
         throw std::runtime_error("Does not satisfy the postcondition!");
     durationVer = chrono::steady_clock::now() - startVer;
     
-    std::cout << VATA::Util::Convert::ToString(aut.qubitNum) << " & " << VATA::Util::TreeAutomata::gateCount
-        << " & " << stateBefore << " & " << aut.stateNum
+    std::cout //<< VATA::Util::Convert::ToString(aut.qubitNum) << " & " << VATA::Util::TreeAutomata::gateCount << " & "
+        << stateBefore << " & " << aut.stateNum
         << " & " << transitionBefore << " & " << aut.transition_size()
         << " & " << toString(durationSim) << " & " << toString(durationVer);
     return 0;
