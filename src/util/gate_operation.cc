@@ -229,49 +229,18 @@ void VATA::Util::TreeAutomata::CNOT(int c, int t, bool opt) {
     #endif
     auto start = std::chrono::steady_clock::now();
     assert(c != t);
-    if (c > t) {
-        this->semi_determinize();
-        TreeAutomata aut1 = *this;
-        aut1.branch_restriction(c, false);
-        TreeAutomata aut2 = *this;
-        aut2.branch_restriction(c, true);
-        TreeAutomata aut3 = aut2;
-        aut2.value_restriction(t, false);
-        aut2.branch_restriction(t, true);
-        aut3.value_restriction(t, true);
-        aut3.branch_restriction(t, false);
-        *this = aut1 + aut2 + aut3;
-        this->semi_undeterminize();
-    } else {
-        auto aut2 = *this;
-        aut2.X(t); gateCount--; // prevent repeated counting
-        for (const auto &tr : aut2.transitions) {
-            if (!(is_internal(tr.first) && tr.first[0] <= c)) {
-                auto &ttf = transitions[tr.first];
-                for (const auto &in_out : tr.second) {
-                    StateVector in;
-                    for (const auto &s : in_out.first)
-                        in.push_back(s+stateNum);
-                    for (const auto &s : in_out.second)
-                        ttf[in].insert(s+stateNum);
-                }
-            }
-        }
-        auto &tac = transitions.at({c});
-        auto in_outs = tac;
-        for (const auto &in_out : in_outs) {
-            assert(in_out.first.size() == 2);
-            if (in_out.first[0] < stateNum && in_out.first[1] < stateNum) {
-                tac[{in_out.first[0], in_out.first[1]+stateNum}] = in_out.second;
-                tac.erase(in_out.first);
-            }
-        }
-        stateNum += aut2.stateNum;
-        if (opt) {
-            remove_useless();
-            reduce();
-        }
-    }
+    this->semi_determinize();
+    TreeAutomata aut1 = *this;
+    aut1.branch_restriction(c, false);
+    TreeAutomata aut2 = *this;
+    aut2.branch_restriction(c, true);
+    TreeAutomata aut3 = aut2;
+    aut2.value_restriction(t, false);
+    aut2.branch_restriction(t, true);
+    aut3.value_restriction(t, true);
+    aut3.branch_restriction(t, false);
+    *this = aut1 + aut2 + aut3;
+    this->semi_undeterminize();
     gateCount++;
     auto duration = std::chrono::steady_clock::now() - start;
     if (gateLog) std::cout << "CNOT" << c << "," << t << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
