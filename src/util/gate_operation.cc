@@ -111,41 +111,14 @@ void VATA::Util::TreeAutomata::Y(int k) {
 }
 
 void VATA::Util::TreeAutomata::Z(int t) {
-    #ifdef TO_QASM
-        system(("echo 'z qubits[" + std::to_string(t-1) + "];' >> " + QASM_FILENAME).c_str());
-        return;
-    #endif
     auto start = std::chrono::steady_clock::now();
-    TransitionMap transitions_copy = transitions;
-    for (const auto &tr : transitions_copy) {
-        Symbol symbol;
-        if (is_leaf(tr.first)) {
-            symbol = Symbol({-tr.first[0], -tr.first[1], -tr.first[2], -tr.first[3], tr.first[4]});
-        } else {
-            symbol = tr.first;
-        }
-        if (!(is_internal(symbol) && symbol[0] <= t)) {
-            for (const auto &in_out : tr.second) {
-                StateVector in;
-                for (const auto &s : in_out.first)
-                    in.push_back(s+stateNum);
-                for (const auto &s : in_out.second)
-                    transitions[symbol][in].insert(s+stateNum);
-            }
-        }
-    } 
-    auto &tak = transitions.at({t});
-    auto in_outs = tak;
-    for (const auto &in_out : in_outs) {
-        assert(in_out.first.size() == 2);
-        if (in_out.first[0] < stateNum && in_out.first[1] < stateNum) {
-            tak[{in_out.first[0], in_out.first[1]+stateNum}] = in_out.second;
-            tak.erase(in_out.first);
-        }
-    }
-    stateNum *= 2;
-    remove_useless();
-    reduce();
+    this->semi_determinize();
+    TreeAutomata aut1 = *this;
+    TreeAutomata aut2 = *this;
+    aut1.branch_restriction(t, false);
+    aut2.branch_restriction(t, true);
+    *this = aut1 - aut2;
+    this->semi_undeterminize();
     gateCount++;
     auto duration = std::chrono::steady_clock::now() - start;
     if (gateLog) std::cout << "Z" << t << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
