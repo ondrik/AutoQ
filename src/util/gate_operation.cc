@@ -147,74 +147,30 @@ void VATA::Util::TreeAutomata::H(int t) {
 }
 
 void VATA::Util::TreeAutomata::S(int t) {
-    #ifdef TO_QASM
-        system(("echo 's qubits[" + std::to_string(t-1) + "];' >> " + QASM_FILENAME).c_str());
-        return;
-    #endif
     auto start = std::chrono::steady_clock::now();
-    auto aut2 = *this;
+    this->semi_determinize();
+    TreeAutomata aut1 = *this;
+    TreeAutomata aut2 = *this;
+    aut1.branch_restriction(t, false);
+    aut2.branch_restriction(t, true);
     aut2.omega_multiplication(2);
-    for (const auto &tr : aut2.transitions) {
-        if (!(is_internal(tr.first) && tr.first[0] <= t)) {
-            auto &ttf = transitions[tr.first];
-            for (const auto &in_out : tr.second) {
-                StateVector in;
-                for (const auto &s : in_out.first)
-                    in.push_back(s+stateNum);
-                for (const auto &s : in_out.second)
-                    ttf[in].insert(s+stateNum);
-            }
-        }
-    }
-    auto &tac = transitions.at({t});
-    auto in_outs = tac;
-    for (const auto &in_out : in_outs) {
-        assert(in_out.first.size() == 2);
-        if (in_out.first[0] < stateNum && in_out.first[1] < stateNum) {
-            tac[{in_out.first[0], in_out.first[1]+stateNum}] = in_out.second;
-            tac.erase(in_out.first);
-        }
-    }
-    stateNum += aut2.stateNum;
-    remove_useless();
-    reduce();
+    *this = aut1 + aut2;
+    this->semi_undeterminize();
     gateCount++;
     auto duration = std::chrono::steady_clock::now() - start;
     if (gateLog) std::cout << "S" << t << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
 }
 
 void VATA::Util::TreeAutomata::T(int t) {
-    #ifdef TO_QASM
-        system(("echo 't qubits[" + std::to_string(t-1) + "];' >> " + QASM_FILENAME).c_str());
-        return;
-    #endif
     auto start = std::chrono::steady_clock::now();
-    auto aut2 = *this;
+    this->semi_determinize();
+    TreeAutomata aut1 = *this;
+    TreeAutomata aut2 = *this;
+    aut1.branch_restriction(t, false);
+    aut2.branch_restriction(t, true);
     aut2.omega_multiplication();
-    for (const auto &tr : aut2.transitions) {
-        if (!(is_internal(tr.first) && tr.first[0] <= t)) {
-            auto &ttf = transitions[tr.first];
-            for (const auto &in_out : tr.second) {
-                StateVector in;
-                for (const auto &s : in_out.first)
-                    in.push_back(s+stateNum);
-                for (const auto &s : in_out.second)
-                    ttf[in].insert(s+stateNum);
-            }
-        }
-    }
-    auto &tac = transitions.at({t});
-    auto in_outs = tac;
-    for (const auto &in_out : in_outs) {
-        assert(in_out.first.size() == 2);
-        if (in_out.first[0] < stateNum && in_out.first[1] < stateNum) {
-            tac[{in_out.first[0], in_out.first[1]+stateNum}] = in_out.second;
-            tac.erase(in_out.first);
-        }
-    }
-    stateNum += aut2.stateNum;
-    remove_useless();
-    reduce();
+    *this = aut1 + aut2;
+    this->semi_undeterminize();
     gateCount++;
     auto duration = std::chrono::steady_clock::now() - start;
     if (gateLog) std::cout << "T" << t << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
