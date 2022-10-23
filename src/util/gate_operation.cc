@@ -53,16 +53,15 @@ void VATA::Util::TreeAutomata::X(int k) {
         return;
     #endif
     auto start = std::chrono::steady_clock::now();
-    auto transitions_copy = transitions;
-    for (const auto &t : transitions_copy) {
-        if (is_internal(t.first) && t.first[0] == k) {
-            transitions.erase(t.first);
-            for (const auto &in_out : t.second) {
-                assert(in_out.first.size() == 2);
-                transitions[t.first][{in_out.first[1], in_out.first[0]}] = in_out.second;
-            }
-        }
-    }
+    this->semi_determinize();
+    TreeAutomata aut1 = *this;
+    TreeAutomata aut2 = *this;
+    aut1.value_restriction(k, false);
+    aut1.branch_restriction(k, true);
+    aut2.value_restriction(k, true);
+    aut2.branch_restriction(k, false);
+    *this = aut1 + aut2;
+    this->semi_undeterminize();
     gateCount++;
     auto duration = std::chrono::steady_clock::now() - start;
     if (gateLog) std::cout << "X" << k << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
