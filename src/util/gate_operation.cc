@@ -280,6 +280,46 @@ void VATA::Util::TreeAutomata::Toffoli(int c, int c2, int t) {
     if (gateLog) std::cout << "Toffoli" << c << "," << c2 << "," << t << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
 }
 
+void VATA::Util::TreeAutomata::Tdg(int t) {
+    auto start = std::chrono::steady_clock::now();
+    this->semi_determinize();
+    TreeAutomata aut1 = *this;
+    TreeAutomata aut2 = *this;
+    aut1.branch_restriction(t, false);
+    aut2.branch_restriction(t, true);
+    aut2.omega_multiplication(7);
+    *this = aut1 + aut2;
+    this->semi_undeterminize();
+    gateCount++;
+    auto duration = std::chrono::steady_clock::now() - start;
+    if (gateLog) std::cout << "Tdg" << t << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
+}
+
+void VATA::Util::TreeAutomata::Sdg(int t) {
+    auto start = std::chrono::steady_clock::now();
+    this->semi_determinize();
+    TreeAutomata aut1 = *this;
+    TreeAutomata aut2 = *this;
+    aut1.branch_restriction(t, false);
+    aut2.branch_restriction(t, true);
+    aut2.omega_multiplication(6);
+    *this = aut1 + aut2;
+    this->semi_undeterminize();
+    gateCount++;
+    auto duration = std::chrono::steady_clock::now() - start;
+    if (gateLog) std::cout << "Sdg" << t << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
+}
+
+void VATA::Util::TreeAutomata::swap(int t1, int t2) {
+    auto start = std::chrono::steady_clock::now();
+    CNOT(t1, t2);
+    CNOT(t2, t1);
+    CNOT(t1, t2);
+    gateCount++;
+    auto duration = std::chrono::steady_clock::now() - start;
+    if (gateLog) std::cout << "swap" << t1 << "," << t2 << "：" << stateNum << " states " << count_transitions() << " transitions " << toString(duration) << "\n";
+}
+
 // void VATA::Util::TreeAutomata::Fredkin(int c, int t, int t2) {
 //     auto start = std::chrono::steady_clock::now();
 //     assert(c != t && t != t2 && t2 != c);
