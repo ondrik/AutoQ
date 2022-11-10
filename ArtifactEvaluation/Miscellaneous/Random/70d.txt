@@ -1,0 +1,30 @@
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+41m53s
+2487.79user 24.57system 41:53.55elapsed 99%CPU (0avgtext+0avgdata 244296maxresident)k
+0inputs+17232outputs (0major+20925755minor)pagefaults 0swaps
