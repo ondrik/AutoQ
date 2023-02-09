@@ -796,7 +796,7 @@ VATA::Util::TreeAutomata VATA::Util::TreeAutomata::uniform(int n) {
     return aut;
 }
 
-VATA::Util::TreeAutomata VATA::Util::TreeAutomata::basis(int n, int i) {
+VATA::Util::TreeAutomata VATA::Util::TreeAutomata::basis(int n, std::vector<int> arr) {
     TreeAutomata aut;
     aut.name = "Classical";
     aut.qubitNum = n;
@@ -804,9 +804,10 @@ VATA::Util::TreeAutomata VATA::Util::TreeAutomata::basis(int n, int i) {
     for (int level=1; level<=n; level++) {
         if (level >= 2)
             aut.transitions[{level}][{2*level - 1, 2*level - 1}] = {2*level - 3};
-        if (level == i)
+        if (arr.empty() || (arr.at(level) & 1))
             aut.transitions[{level}][{2*level - 1, 2*level}] = {2*level - 2};
-        aut.transitions[{level}][{2*level, 2*level - 1}] = {2*level - 2};
+        if (arr.empty() || (arr.at(level) & 2))
+            aut.transitions[{level}][{2*level, 2*level - 1}] = {2*level - 2};
     }
     aut.transitions[{1,0,0,0,0}][{}] = {2*n};
     aut.transitions[{0,0,0,0,0}][{}] = {2*n - 1};

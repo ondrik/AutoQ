@@ -186,7 +186,7 @@ public:
 
     /* Produce an automaton instance. */
     static TreeAutomata uniform(int n);
-    static TreeAutomata basis(int n, int i=0);
+    static TreeAutomata basis(int n, std::vector<int> arr = std::vector<int>());
     static TreeAutomata random(int n);
     static TreeAutomata zero(int n);
     static TreeAutomata basis_zero_one_zero(int n);

@@ -28,11 +28,25 @@ void produce_MOGrover_post();
 void produce_MCToffoli_pre_and_post();
 
 int main(int argc, char **argv) {
+    srand(2);
+
+    std::string qubit; // to match the pattern: qreg qubits[70];
+    VATA::Util::ShellCmd("grep qreg " + std::string(argv[1]), qubit);
+    std::smatch match_pieces;
+    std::regex_search(qubit, match_pieces, std::regex("\\d+"));
+    int NNN = std::atoi(match_pieces[0].str().c_str());
+
+    std::vector<int> arr; /* construct a vector of size NNN+1 with content only 1 and 2 */
+    for (int i=0; i<=NNN; i++) arr.push_back(rand() % 2 + 1);
+    std::cout << VATA::Util::Convert::ToString(arr) << " & ";
+
     auto startSim = chrono::steady_clock::now();
-    for (int var=0; var<=70; var++) {
-        std::cout << var << "\n";
-        std::vector<VATA::Util::TreeAutomata> autvec = {VATA::Util::TreeAutomata::basis(70, var),
-            VATA::Util::TreeAutomata::basis(70, var)};
+    for (int var=0; var<=NNN; var++) {
+        int memory = arr.at(var);
+        arr.at(var) = 3;
+
+        std::vector<VATA::Util::TreeAutomata> autvec = {VATA::Util::TreeAutomata::basis(NNN, arr),
+            VATA::Util::TreeAutomata::basis(NNN, arr)};
         for (int var2=0; var2<=1; var2++) {
             int stateBefore = autvec[var2].stateNum, transitionBefore = autvec[var2].transition_size();
 
@@ -138,10 +152,11 @@ int main(int argc, char **argv) {
             if (!VATA::Util::TreeAutomata::check_inclusion(argv[3], argv[4])) {
                 auto durationSim = chrono::steady_clock::now() - startSim;
                 // throw std::runtime_error("Does not satisfy the postcondition!");
-                std::cout << toString(durationSim) << "\n";
+                std::cout << (var+1) << " & " << toString(durationSim) << "\n";
                 return 0;
             }
         }
+        arr.at(var) = memory;
     }
     return 0;
 }
