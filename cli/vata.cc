@@ -122,132 +122,122 @@ std::string toString(std::chrono::steady_clock::duration tp)
 // }
 
 int main(int argc, char **argv) {
-    int gateCount = 0;
-    std::vector<VATA::Util::TreeAutomata> autvec;
+    VATA::Util::TreeAutomata aut = VATA::Parsing::TimbukParser::FromFileToAutomata(argv[1]);
+    int stateBefore = aut.stateNum, transitionBefore = aut.transition_size();
     auto startSim = chrono::steady_clock::now();
-    for (int var2=0; var2<=1; var2++) {
-        int stateBefore, transitionBefore;
-        string line;
-        ifstream qasm(argv[var2+1]);
-        const std::regex digit("\\d+");
-        const std::regex_iterator<std::string::iterator> END;
-        if (!qasm.is_open()) return EXIT_FAILURE;
-        while (getline(qasm, line)) {
-            if (line.find("OPENQASM") == 0 || line.find("include ") == 0|| line.find("//") == 0) continue;
-            if (line.find("qreg ") == 0) {
-                std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
-                while (it != END) {
-                    autvec.push_back(VATA::Util::TreeAutomata::zero(atoi(it->str().c_str())));
-                    stateBefore = autvec[var2].stateNum;
-                    transitionBefore = autvec[var2].transition_size();
-                    // if (atoi(it->str().c_str()) != autvec[var2].qubitNum)
-                    //     throw std::exception();
-                    ++it;
-                }
-            } else if (line.find("x ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].X(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("y ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].Y(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("z ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].Z(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("h ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].H(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("s ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].S(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("sdg ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].Sdg(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("t ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].T(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("tdg ") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].Tdg(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("rx(pi/2) ") == 0 || line.find("rx(pi / 2)") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].Rx(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("ry(pi/2) ") == 0 || line.find("ry(pi / 2)") == 0) {
-                std::smatch match_pieces;
-                if (std::regex_search(line, match_pieces, digit))
-                    autvec[var2].Ry(1 + atoi(match_pieces[0].str().c_str()));
-            } else if (line.find("cx ") == 0 || line.find("CX ") == 0 ) {
-                std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
-                std::vector<int> pos;
-                while (it != END) {
-                    pos.push_back(1 + atoi(it->str().c_str()));
-                    ++it;
-                }
-                autvec[var2].CNOT(pos[0], pos[1]);
-            } else if (line.find("cz ") == 0) {
-                std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
-                std::vector<int> pos;
-                while (it != END) {
-                    pos.push_back(1 + atoi(it->str().c_str()));
-                    ++it;
-                }
-                autvec[var2].CZ(pos[0], pos[1]);
-            } else if (line.find("ccx ") == 0) {
-                std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
-                std::vector<int> pos;
-                while (it != END) {
-                    pos.push_back(1 + atoi(it->str().c_str()));
-                    ++it;
-                }
-                autvec[var2].Toffoli(pos[0], pos[1], pos[2]);
-            } else if (line.find("swap ") == 0) {
-                std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
-                std::vector<int> pos;
-                while (it != END) {
-                    pos.push_back(1 + atoi(it->str().c_str()));
-                    ++it;
-                }
-                autvec[var2].swap(pos[0], pos[1]);
-            } else if (line.length() > 0)
-                throw std::runtime_error("Unsupported gate: " + line);
-        }
-        qasm.close();
-        if (var2 == 0)
-            gateCount = VATA::Util::TreeAutomata::gateCount;
+    string line;
+    ifstream qasm(argv[2]);
+    const std::regex digit("\\d+");
+    const std::regex_iterator<std::string::iterator> END;
+    if (!qasm.is_open()) return EXIT_FAILURE;
+    while (getline(qasm, line)) {
+        if (line.find("OPENQASM") == 0 || line.find("include ") == 0) continue;
+        if (line.find("qreg ") == 0) {
+            std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
+            while (it != END) {
+                if (atoi(it->str().c_str()) != aut.qubitNum)
+                    throw std::exception();
+                ++it;
+            }
+        } else if (line.find("x ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.X(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("y ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.Y(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("z ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.Z(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("h ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.H(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("s ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.S(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("sdg ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.Sdg(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("t ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.T(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("tdg ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.Tdg(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("rx(pi/2) ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.Rx(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("ry(pi/2) ") == 0) {
+            std::smatch match_pieces;
+            if (std::regex_search(line, match_pieces, digit))
+                aut.Ry(1 + atoi(match_pieces[0].str().c_str()));
+        } else if (line.find("cx ") == 0) {
+            std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
+            std::vector<int> pos;
+            while (it != END) {
+                pos.push_back(1 + atoi(it->str().c_str()));
+                ++it;
+            }
+            aut.CNOT(pos[0], pos[1]);
+        } else if (line.find("cz ") == 0) {
+            std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
+            std::vector<int> pos;
+            while (it != END) {
+                pos.push_back(1 + atoi(it->str().c_str()));
+                ++it;
+            }
+            aut.CZ(pos[0], pos[1]);
+        } else if (line.find("ccx ") == 0) {
+            std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
+            std::vector<int> pos;
+            while (it != END) {
+                pos.push_back(1 + atoi(it->str().c_str()));
+                ++it;
+            }
+            aut.Toffoli(pos[0], pos[1], pos[2]);
+        } else if (line.find("swap ") == 0) {
+            std::regex_iterator<std::string::iterator> it(line.begin(), line.end(), digit);
+            std::vector<int> pos;
+            while (it != END) {
+                pos.push_back(1 + atoi(it->str().c_str()));
+                ++it;
+            }
+            aut.swap(pos[0], pos[1]);
+        } else if (line.length() > 0)
+            throw std::runtime_error("Unsupported gate: " + line);
     }
-
-    for (int vvv=0; vvv<=1; vvv++) {
-        std::ofstream fileLhs(argv[3+vvv]);
-        autvec[vvv].fraction_simplication();
-        fileLhs << VATA::Serialization::TimbukSerializer::Serialize(autvec[vvv]);
-        fileLhs.close(); // Notice that we assume fractions in argv[4] are already simplified.
-    }
+    qasm.close();
+    auto durationSim = chrono::steady_clock::now() - startSim;
+    
+    auto durationVer = durationSim; // just borrow its type!
+    std::ofstream fileLhs(argv[3]);
+    aut.fraction_simplication();
+    fileLhs << VATA::Serialization::TimbukSerializer::Serialize(aut);
+    fileLhs.close(); // Notice that we assume fractions in argv[4] are already simplified.
+    auto startVer = chrono::steady_clock::now();
     if (argc >= 5) {
         if (!VATA::Util::TreeAutomata::check_inclusion(argv[3], argv[4])) {
-            auto durationSim = chrono::steady_clock::now() - startSim;
             // throw std::runtime_error("Does not satisfy the postcondition!");
-            std::cout // << VATA::Util::Convert::ToString(autvec[0].qubitNum) << " & " << gateCount
-                // << " & " << stateBefore << " & " << aut.stateNum
-                // << " & " << transitionBefore << " & " << aut.transition_size()
-                // << " & " 
-                << toString(durationSim) << " & V";
+            std::cout //<< VATA::Util::Convert::ToString(aut.qubitNum) << " & " << VATA::Util::TreeAutomata::gateCount
+            << stateBefore << " & " << aut.stateNum
+            << " & " << transitionBefore << " & " << aut.transition_size()
+            << " & " << toString(durationSim) << " & V";
             return 0;
         }
     }
-
-    auto durationSim = chrono::steady_clock::now() - startSim;
-    std::cout //<< VATA::Util::Convert::ToString(autvec[0].qubitNum) << " & " << gateCount
-        // << " & " << stateBefore << " & " << aut.stateNum
-        // << " & " << transitionBefore << " & " << aut.transition_size()
-        // << " & "
-        << toString(durationSim) << " & X";
+    durationVer = chrono::steady_clock::now() - startVer;
+    
+    std::cout //<< VATA::Util::Convert::ToString(aut.qubitNum) << " & " << VATA::Util::TreeAutomata::gateCount << " & "
+        << stateBefore << " & " << aut.stateNum
+        << " & " << transitionBefore << " & " << aut.transition_size()
+        << " & " << toString(durationSim) << " & " << toString(durationVer);
     return 0;
 }
