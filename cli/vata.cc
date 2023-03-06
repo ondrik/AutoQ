@@ -28,7 +28,7 @@ void produce_MOGrover_post();
 void produce_MCToffoli_pre_and_post();
 
 int main(int argc, char **argv) {
-    srand(2);
+    srand(5);
 
     std::string qubit; // to match the pattern: qreg qubits[70];
     VATA::Util::ShellCmd("grep qreg " + std::string(argv[1]), qubit);
@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
 
     std::vector<int> arr; /* construct a vector of size NNN+1 with content only 1 and 2 */
     for (int i=0; i<=NNN; i++) arr.push_back(rand() % 2 + 1);
-    std::cout << VATA::Util::Convert::ToString(arr) << " & ";
+    // std::cout << VATA::Util::Convert::ToString(arr) << " & ";
 
     auto startSim = chrono::steady_clock::now();
     for (int var=0; var<=NNN; var++) {
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
             if (!VATA::Util::TreeAutomata::check_inclusion(argv[3], argv[4])) {
                 auto durationSim = chrono::steady_clock::now() - startSim;
                 // throw std::runtime_error("Does not satisfy the postcondition!");
-                std::cout << (var+1) << " & " << toString(durationSim) << "\n";
+                std::cout << toString(durationSim) << " & " << (var+1) << "\n";
                 return 0;
             }
         }
