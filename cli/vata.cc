@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
             if (!VATA::Util::TreeAutomata::check_inclusion(argv[3], argv[4])) {
                 auto durationSim = chrono::steady_clock::now() - startSim;
                 // throw std::runtime_error("Does not satisfy the postcondition!");
-                std::cout << toString(durationSim) << " & " << (var+1) << "\n";
+                std::cout << toString(durationSim) << " & T\n"; // (var+1) << "\n";
                 return 0;
             }
         }
