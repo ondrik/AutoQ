@@ -6,6 +6,7 @@
 #include <autoq/util/util.hh>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <util_sim.h>
 
 #include <chrono>
 #include <iomanip>
@@ -57,16 +58,23 @@ int main(int argc, char **argv) {
         }
     } else { // argc >= 5
         AUTOQ::Util::SymbolicAutomata aut = AUTOQ::Parsing::TimbukParser<AUTOQ::Util::Symbolic>::FromFileToAutomata(argv[1]);
+        std::cout << aut.stateNum << " " << aut.transition_size() << " ";
+        auto startSim = chrono::steady_clock::now();
         aut.execute(argv[2]);
         aut.fraction_simplification();
         aut.reduce();
+        std::cout << aut.stateNum << " " << aut.transition_size() << " ";
         AUTOQ::Util::PredicateAutomata spec = AUTOQ::Parsing::TimbukParser<AUTOQ::Util::Predicate>::FromFileToAutomata(argv[3]);
+        std::cout << spec.stateNum << " " << spec.transition_size() << " ";
         std::ifstream t(argv[4]);
         std::stringstream buffer;
         buffer << t.rdbuf();
         AUTOQ::Util::Constraint C(buffer.str().c_str());
-        aut.print();
-        std::cout << "-\n" << AUTOQ::Util::is_spec_satisfied(C, aut, spec) << "\n";
+        // aut.print();
+        std::cout << AUTOQ::Util::is_spec_satisfied(C, aut, spec) << "\n";
+        auto durationSim = chrono::steady_clock::now() - startSim;
+        std::cout << getPeakRSS() << " " << toString(durationSim) << "\n";
+        // Ref: https://stackoverflow.com/q/669438/11550178
     }
     return 0;
 }
