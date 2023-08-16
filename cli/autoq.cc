@@ -26,95 +26,16 @@ void rand_gen(int &a, int &b, int &c);
 std::string toString(std::chrono::steady_clock::duration tp);
 
 int main(int argc, char **argv) {
-try {
-    if (argc < 3 || (argc >= 2 && ((strcmp(argv[1], "-h")==0) || (strcmp(argv[1], "--help")==0)))) {
-        std::cout << R"(usage: ./autoq [-h] pre.{aut|hsl} circuit.qasm [spec.{aut|hsl}] [constraint.smt]
+    AUTOQ::TreeAutomata aut = AUTOQ::Parsing::TimbukParser<AUTOQ::Symbol::Concrete>::FromFileToAutomata(argv[1]);
 
-positional arguments:
-  pre.{aut|hsl}         the input automaton
-
-                        The extension "aut" implies the Timbuk format of tree automata.
-                        The extension "hsl" implies the high-level specification language.
-
-  circuit.qasm          the quantum circuit in OpenQASM 2.0.
-
-  spec.{aut|hsl}        the specification automaton we expect to include the output automaton produced by
-                        the input automaton passing through the circuit
-                        This file can be omitted when the probability amplitudes are all concrete. In this
-                        case, the program only prints the output automaton without checking inclusion.
-
-                        The extension "aut" implies the Timbuk format of tree automata.
-                        The extension "hsl" implies the high-level specification language.
-
-  constraint.smt        the SMT-LIB file declaring all variables used in the automaton and their constraints
-                        This file is required when the verification is performed under the symbolic mode.
-
-
-optional arguments:
-  -h, --help            show this help message and exit)" << std::endl;
-        return 0;
+    std::ofstream outputFile(argv[2]);
+    if (!outputFile.is_open()) {
+        std::cerr << "Failed to open the file." << std::endl;
+        return 1;
     }
-
-    if (argc < 5) {
-        if (argc >= 4) { // Check VATA_PATH first!
-            if (std::getenv("VATA_PATH") == nullptr) {
-                throw std::runtime_error("[ERROR] The environment variable VATA_PATH is not found!");
-            }
-        }
-        AUTOQ::TreeAutomata aut = AUTOQ::Parsing::TimbukParser<AUTOQ::Symbol::Concrete>::FromFileToAutomata(argv[1]);
-        // int stateBefore = aut.stateNum, transitionBefore = aut.transition_size();
-        auto startSim = chrono::steady_clock::now();
-        aut.execute(argv[2]);
-        auto durationSim = chrono::steady_clock::now() - startSim;
-        auto durationVer = durationSim; // just borrow its type!
-        // aut.fraction_simplification();
-        auto startVer = chrono::steady_clock::now();
-        std::cout << "OUTPUT AUTOMATON:\n";
-        std::cout << "=================\n";
-        aut.print();
-        std::cout << "=================\n";
-        if (argc >= 4) {
-            auto aut2 = AUTOQ::Parsing::TimbukParser<AUTOQ::Symbol::Concrete>::FromFileToAutomata(argv[3]);
-            if (!AUTOQ::TreeAutomata::check_inclusion(aut, aut2)) {
-                std::cout << "-\n0\n";
-                // throw std::runtime_error("Does not satisfy the postcondition!");
-                // std::cout << AUTOQ::Util::Convert::ToString(aut.qubitNum) << " & " << AUTOQ::TreeAutomata::gateCount
-                // << " & " << stateBefore << " & " << aut.stateNum
-                // << " & " << transitionBefore << " & " << aut.transition_size()
-                // << " & " << toString(durationSim) << " & V";
-            } else
-                std::cout << "-\n1\n";
-        } else {
-            durationVer = chrono::steady_clock::now() - startVer;
-            // std::cout << AUTOQ::Util::Convert::ToString(aut.qubitNum) << " & " << AUTOQ::TreeAutomata::gateCount
-            //     << " & " << stateBefore << " & " << aut.stateNum
-            //     << " & " << transitionBefore << " & " << aut.transition_size()
-            //     << " & " << toString(durationSim) << " & " << toString(durationVer);
-        }
-    } else { // argc >= 5
-        auto startVer = chrono::steady_clock::now();
-        AUTOQ::SymbolicAutomata aut = AUTOQ::Parsing::TimbukParser<AUTOQ::Symbol::Symbolic>::FromFileToAutomata(argv[1]);
-        aut.execute(argv[2]);
-        // aut.fraction_simplification();
-        aut.reduce();
-        AUTOQ::PredicateAutomata spec = AUTOQ::Parsing::TimbukParser<AUTOQ::Symbol::Predicate>::FromFileToAutomata(argv[3]);
-        std::ifstream t(argv[4]);
-        if (!t) // in case the file could not be open
-            throw std::runtime_error("[ERROR] Failed to open file " + std::string(argv[4]) + ".");
-        std::stringstream buffer;
-        buffer << t.rdbuf();
-        AUTOQ::Constraint C(buffer.str().c_str());
-        std::cout << "OUTPUT AUTOMATON:\n";
-        std::cout << "=================\n";
-        aut.print();
-        std::cout << "=================\n";
-        std::cout << "-\n" << AUTOQ::is_spec_satisfied(C, aut, spec) << " " << toString(chrono::steady_clock::now() - startVer) << " " << getPeakRSS() / 1024 / 1024 << "MB\n";
-    }
+    outputFile << AUTOQ::Serialization::TimbukSerializer::Serialize(aut);
+    outputFile.close();
     return 0;
-} catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
-    return 0;
-}
 }
 
 int rand_gen() {
